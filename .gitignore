@@ -1,0 +1,13 @@
+.theos/
+artifacts/
+Device/
+Evidence/
+packages/
+Tools/Build/
+Tools/Logs/
+__pycache__/
+*.pyc
+*.o
+*.dylib
+*.dylib.REJECTED
+.DS_Store

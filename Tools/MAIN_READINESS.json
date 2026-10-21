@@ -1,0 +1,10 @@
+{
+  "status": "BLOCKED",
+  "reason": "SR_SCENE_HOSTING_IMPLEMENTED=0; no verified app scene hosting/entitlement lifecycle. Swift is uncompiled on this host.",
+  "main_scene_hosting_implemented": false,
+  "main_scene_hosting_verified": false,
+  "entitlements_verified": false,
+  "licensing_preserved": false,
+  "full_package_reviewed": false,
+  "note": "These are review gates, not feature-enable knobs. Packaging remains unconditionally disabled regardless of this file."
+}

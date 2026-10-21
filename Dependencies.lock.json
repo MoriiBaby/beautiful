@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "cache_default": "/var/minis/workspace/stheno-toolchain",
+  "target": {
+    "platform": "ios",
+    "minimum_os": "15.0",
+    "architectures": [
+      "arm64",
+      "arm64e"
+    ],
+    "arm64e_abi": "clang19 target default; not asserted Apple new ABI compatible"
+  },
+  "sdk": {
+    "url": "https://github.com/theos/sdks.git",
+    "commit": "0222fd5413cf4b9af096f37b4621afa2688572f7",
+    "repository_cache": "sdks",
+    "subdir": "iPhoneOS15.6.sdk",
+    "git_tree": "c7ab26f8619ba0a7d62abd6af3187465b7289df6",
+    "upstream_description": "Real Apple SDK redistributed/patched with private symbols by Theos; NOT an Apple-hosted download",
+    "directory_version": "15.6",
+    "metadata_version": "15.5",
+    "canonical_name": "iphoneos15.5",
+    "sdk_settings_sha256": "8063c529f5b6b538df50d48e18d23b3fb38215e1d7313fa4a997d323313f68f6",
+    "materialization": "63 original Git symlinks replaced only by byte-identical official targets because Minis shared filesystem forbids symlinks",
+    "materialized_file_count": 8021,
+    "materialized_manifest_sha256": "a16333f9d49405cea01d0200523ca547b8eea12c1981f9ad1fbd430c0d80d7a2"
+  },
+  "files": [
+    {
+      "path": "upstream-refs/lld19-ARM64.cpp",
+      "repository": "https://github.com/llvm/llvm-project",
+      "commit": "aadaa00de76ed0c4987b97450dd638f63a385bed",
+      "url": "https://raw.githubusercontent.com/llvm/llvm-project/aadaa00de76ed0c4987b97450dd638f63a385bed/lld/MachO/Arch/ARM64.cpp",
+      "sha256": "1f8fbabfcd80c7c132d6428f0c458d160fe71f5c521bf775643b204f0aac7aae"
+    },
+    {
+      "path": "include/roothide.h",
+      "repository": "https://github.com/roothide/libroothide",
+      "commit": "7764c54759009272b4f2f23c18c62b21794fe6dd",
+      "url": "https://raw.githubusercontent.com/roothide/libroothide/7764c54759009272b4f2f23c18c62b21794fe6dd/roothide.h",
+      "sha256": "086e3d87f45c43e705d50b5b095380d5d307fcf667e0b0259698e9b4f0dd833f"
+    },
+    {
+      "path": "include/roothide/roothide.h",
+      "repository": "https://github.com/roothide/libroothide",
+      "commit": "7764c54759009272b4f2f23c18c62b21794fe6dd",
+      "url": "https://raw.githubusercontent.com/roothide/libroothide/7764c54759009272b4f2f23c18c62b21794fe6dd/roothide.h",
+      "sha256": "086e3d87f45c43e705d50b5b095380d5d307fcf667e0b0259698e9b4f0dd833f"
+    },
+    {
+      "path": "include/substrate.h",
+      "repository": "https://github.com/roothide/lib",
+      "commit": "85e9b5b8aff11bbefc59525c64c8f55149926e56",
+      "url": "https://raw.githubusercontent.com/roothide/lib/85e9b5b8aff11bbefc59525c64c8f55149926e56/CydiaSubstrate.framework/Headers/CydiaSubstrate.h",
+      "sha256": "671a92c7ad9f7fe90315b12a4193587e841bfe987bbf5ddf088983fa517a2b50"
+    },
+    {
+      "path": "lib/libroothide.tbd",
+      "repository": "https://github.com/roothide/lib",
+      "commit": "85e9b5b8aff11bbefc59525c64c8f55149926e56",
+      "url": "https://raw.githubusercontent.com/roothide/lib/85e9b5b8aff11bbefc59525c64c8f55149926e56/libroothide.tbd",
+      "sha256": "f96b3b624f17dfd54ed59b05592ae3b0216adc9ac4ee2464348156ad017091c5"
+    },
+    {
+      "path": "lib/libsubstrate.tbd",
+      "repository": "https://github.com/roothide/lib",
+      "commit": "85e9b5b8aff11bbefc59525c64c8f55149926e56",
+      "url": "https://raw.githubusercontent.com/roothide/lib/85e9b5b8aff11bbefc59525c64c8f55149926e56/CydiaSubstrate.framework/CydiaSubstrate.tbd",
+      "sha256": "75690f4a4b52c8e27d8e85cee1b131a00f3bbd6a734cffef363a01079bdf0539"
+    },
+    {
+      "path": "upstream-refs/libroothide-Makefile",
+      "repository": "https://github.com/roothide/libroothide",
+      "commit": "7764c54759009272b4f2f23c18c62b21794fe6dd",
+      "url": "https://raw.githubusercontent.com/roothide/libroothide/7764c54759009272b4f2f23c18c62b21794fe6dd/Makefile",
+      "sha256": "cf7a9592483cef9f2d10edcd05a232922fafe22a448dade0434a092f7648513c"
+    },
+    {
+      "path": "upstream-refs/libroothide-LICENSE",
+      "repository": "https://github.com/roothide/libroothide",
+      "commit": "7764c54759009272b4f2f23c18c62b21794fe6dd",
+      "url": "https://raw.githubusercontent.com/roothide/libroothide/7764c54759009272b4f2f23c18c62b21794fe6dd/LICENSE",
+      "sha256": "6fcda17dfab9672260e928a0c0917f055b9ee458d5fbf652abc58f61d0267d3c"
+    },
+    {
+      "path": "upstream-refs/roothide-rules.mk",
+      "repository": "https://github.com/roothide/theos",
+      "commit": "cfba89a53a05b4a1b822121158acc3669c20602f",
+      "url": "https://raw.githubusercontent.com/roothide/theos/cfba89a53a05b4a1b822121158acc3669c20602f/vendor/mod/roothide/instance/rules.mk",
+      "sha256": "a18725904028e7aed7e13f8d843320498b66c58792f689a25e2c8e7c8a94407c"
+    },
+    {
+      "path": "upstream-refs/roothide-library.mk",
+      "repository": "https://github.com/roothide/theos",
+      "commit": "cfba89a53a05b4a1b822121158acc3669c20602f",
+      "url": "https://raw.githubusercontent.com/roothide/theos/cfba89a53a05b4a1b822121158acc3669c20602f/vendor/mod/roothide/instance/library.mk",
+      "sha256": "440a935e3929d1d75af6297e9e440e1c9f598d222e52eb2efa2d8cdc89aced5c"
+    },
+    {
+      "path": "upstream-refs/roothide-deb.mk",
+      "repository": "https://github.com/roothide/theos",
+      "commit": "cfba89a53a05b4a1b822121158acc3669c20602f",
+      "url": "https://raw.githubusercontent.com/roothide/theos/cfba89a53a05b4a1b822121158acc3669c20602f/vendor/mod/roothide/package/deb.mk",
+      "sha256": "394d6043439a2e82f61b62d30e0fab2153fafc3abd6eebff5c03cb5088595a15"
+    },
+    {
+      "path": "upstream-refs/Orion-README.md",
+      "repository": "https://github.com/theos/orion",
+      "commit": "762159dc214d5aafa2edfc7554c659fc3c658b5b",
+      "url": "https://raw.githubusercontent.com/theos/orion/762159dc214d5aafa2edfc7554c659fc3c658b5b/README.md",
+      "sha256": "e648754066d624192618f664a84808f29919a9d921c4e2311f855b79c8bfef57"
+    },
+    {
+      "path": "upstream-refs/SDK-README.md",
+      "repository": "https://github.com/theos/sdks",
+      "commit": "0222fd5413cf4b9af096f37b4621afa2688572f7",
+      "url": "https://raw.githubusercontent.com/theos/sdks/0222fd5413cf4b9af096f37b4621afa2688572f7/README.md",
+      "sha256": "4bf91e14826beeb70a6977a09685403c6f5d1dcf183ca2ad6381a575117c4939"
+    },
+    {
+      "path": "upstream-refs/SDK-LICENSE.md",
+      "repository": "https://github.com/theos/sdks",
+      "commit": "0222fd5413cf4b9af096f37b4621afa2688572f7",
+      "url": "https://raw.githubusercontent.com/theos/sdks/0222fd5413cf4b9af096f37b4621afa2688572f7/LICENSE.md",
+      "sha256": "f273786a1a96b809c753d49432050b5f2e2036967075302ca2e7af1d7e5e4e0f"
+    }
+  ],
+  "upstream_theos": {
+    "repository": "https://github.com/roothide/theos.git",
+    "commit": "cfba89a53a05b4a1b822121158acc3669c20602f",
+    "headers_commit": "744ee65cd464becd8b06cab6eaeffc0512b371f1",
+    "lib_commit": "85e9b5b8aff11bbefc59525c64c8f55149926e56",
+    "orion_commit": "762159dc214d5aafa2edfc7554c659fc3c658b5b",
+    "status": "reference checkout only, NOT a usable full Theos/Swift installation"
+  },
+  "toolchain": {
+    "clang": "Alpine clang version 19.1.4",
+    "ld64_lld": "LLD 19.1.4",
+    "host": "aarch64-alpine-linux-musl",
+    "swift": "missing",
+    "xcrun": "missing",
+    "signing": "not performed"
+  }
+}

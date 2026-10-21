@@ -1,0 +1,10 @@
+Package: com.local.stheno.reconstruction
+Name: Stheno Reconstruction (INCOMPLETE DEV)
+Version: 0.1.0~dev1
+Architecture: iphoneos-arm64e
+Description: Independent incomplete reconstruction; no device-load or full scene-hosting validation. Not an install-ready restoration.
+Section: Tweaks
+Maintainer: Local Reconstruction
+Author: Local Reconstruction
+Depends: firmware (>= 15.0), roothide, mobilesubstrate, dev.theos.orion (>= 1.0.0)
+Conflicts: com.nx.stheno
