@@ -20,4 +20,14 @@
 - 主模块不完整门禁保持关闭；最终两个dylib是开发编译证据，不是完整Stheno恢复包，无DEB/Release/设备功能结论。
 
 ## 验证记录
-具体结果见GitHub Actions及CI artifact。源码中的历史Linux验证只代表历史范围，不冒充本次macOS结果。
+
+已完成的实际结果：
+
+- Commit `0b10630f60a89efe84d917ffc7fd0fb0f28558e3`：首次 Mac 构建失败，原因是 runner 缺 `rg`；未进入编译。
+- Commit `0d71698191649e348beae3623808a7a742fa664e`：Actions run `39587719447` 成功，job `119180680645` 成功。
+- 云端工具链：Xcode 26.6 / iPhoneOS SDK 26.5；RootHide Theos `cfba89a53a05b4a1b822121158acc3669c20602f`；headers `744ee65cd464becd8b06cab6eaeffc0512b371f1`；lib `85e9b5b8aff11bbefc59525c64c8f55149926e56`。
+- Camera 和 Keyboard 均生成 arm64 + arm64e、minOS 15.0、RootHide install name/依赖和 ldid 开发签名，真实 Mach-O 验证通过。
+- 禁用的 SceneBridge、异步场景会话、窗口策略和 Swift 候选对象均编译通过；没有链接/激活主模块。
+- Artifact `stheno-rebuild-dev1-small-0d71698191649e348beae3623808a7a742fa664e`，GitHub artifact id `12340547197`，大小 259936 字节，下载 ZIP SHA-256 `8f86ae9bd67ba85e271e895c874ce4e9da718f9c265b78c3a966cccffbad555e`。
+
+这些只证明云端构建和静态产物验证通过，不证明设备加载、相机/键盘功能、应用场景交互或关闭恢复。源码中的历史 Linux 验证只代表历史范围，不冒充本次 macOS 结果。
