@@ -88,12 +88,21 @@ class SmallModuleWiring(unittest.TestCase):
         self.assertNotIn('dlopen(',runtime)
     def test_scene_first_attach_then_window_visible(self):
         swift=source('Sources/Main/SRFloatingCoordinator.swift')
-        start=swift.index('func attachAndPresent()')
-        region=swift[start:swift.index('func bringForward()',start)]
+        start=swift.index('func attachAndPresent(completion:')
+        region=swift[start:swift.index('private func finishOpen',start)]
         self.assertLess(region.index('guard SRMainSceneHostingAvailable()'),region.index('UIWindow(frame:'))
-        self.assertLess(region.index('guard SRMainAttachScene('),region.index('window.isHidden = false'))
-        self.assertIn('window.rootViewController = nil',region)
+        self.assertLess(region.index('SRMainAttachSceneAsync('),region.index('window.isHidden = false // only after'))
+        self.assertLess(region.index('if let error = error'),region.index('window.isHidden = false // only after'))
+        self.assertIn('guard self.phase == .opening',region)
+        self.assertIn('window.isHidden = true',region)
+        self.assertIn('SRMainCloseSceneAsync(',swift)
+        self.assertIn('self.floatingWindow?.rootViewController = nil',swift)
         self.assertNotIn('UIGraphicsImageRenderer',swift)
+        self.assertNotIn('makeKeyAndVisible()',swift)
+        bridge=source('Sources/Main/SRMainBridge.mm')
+        self.assertIn('[SRSceneSession new]',bridge)
+        self.assertIn('launchIfMissing:NO',bridge)
+        self.assertNotIn('[SRSceneHost new]',bridge)
     def test_original_inputs_and_extracted_sources_unchanged(self):
         if not (AUDIT/'INPUT-MANIFEST.json').is_file():
             self.skipTest('Original audit not supplied; source-only checkout')

@@ -18,23 +18,27 @@ final class SRFloatingCoordinator {
     static let shared = SRFloatingCoordinator()
     private var controllers: [String: SRFloatingController] = [:]
 
-    func open(bundleIdentifier: String) throws {
+    func open(bundleIdentifier: String, completion: @escaping (Error?) -> Void) {
         precondition(Thread.isMainThread)
-        guard !bundleIdentifier.isEmpty else { throw SRFloatingError.invalidBundle }
+        guard !bundleIdentifier.isEmpty else {
+            DispatchQueue.main.async { completion(SRFloatingError.invalidBundle) }; return
+        }
         guard SRMainSceneHostingAvailable() else {
-            throw SRFloatingError.unavailable(SRMainSceneHostingBlocker())
+            let error = SRFloatingError.unavailable(SRMainSceneHostingBlocker())
+            DispatchQueue.main.async { completion(error) }; return
         }
         if let existing = controllers[bundleIdentifier] {
-            existing.bringForward()
+            existing.attachAndPresent(completion: completion)
             return
         }
         let controller = SRFloatingController(bundleIdentifier: bundleIdentifier)
-        try controller.attachAndPresent()
+        // Retain while asynchronous acquisition is pending; closeAll cancels pending starts too.
         controllers[bundleIdentifier] = controller
         controller.onClosed = { [weak self, weak controller] in
             guard let self = self, self.controllers[bundleIdentifier] === controller else { return }
             self.controllers.removeValue(forKey: bundleIdentifier)
         }
+        controller.attachAndPresent(completion: completion)
     }
 
     func closeAll() {
@@ -50,9 +54,14 @@ private final class SRFloatingController: UIViewController {
     private var floatingWindow: UIWindow?
     private let appContainer = UIView()
     private let header = UIView()
+    private enum Phase { case idle, opening, attached, closing, closed }
+    private var phase: Phase = .idle
     private var panOrigin = CGPoint.zero
     private var pinchSize = CGSize.zero
-    private var closed = false
+    private var openCompletions: [(Error?) -> Void] = []
+    private var resizeInFlight = false
+    private var queuedFrame: CGRect?
+    private var displayGeneration: UInt64 = 0
     var onClosed: (() -> Void)?
 
     init(bundleIdentifier: String) {
@@ -97,81 +106,142 @@ private final class SRFloatingController: UIViewController {
         header.addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(resize(_:))))
     }
 
-    func attachAndPresent() throws {
+    func attachAndPresent(completion: @escaping (Error?) -> Void) {
         precondition(Thread.isMainThread)
-        // Absolutely no empty window is shown as a successful launch.
-        guard SRMainSceneHostingAvailable() else {
-            throw SRFloatingError.unavailable(SRMainSceneHostingBlocker())
+        if phase == .attached {
+            floatingWindow?.isHidden = false
+            DispatchQueue.main.async { completion(nil) }; return
         }
+        if phase == .opening { openCompletions.append(completion); return }
+        guard phase == .idle else {
+            DispatchQueue.main.async { completion(SRFloatingError.unavailable("Session is closing or closed.")) }; return
+        }
+        guard SRMainSceneHostingAvailable() else {
+            phase = .closed
+            DispatchQueue.main.async { completion(SRFloatingError.unavailable(SRMainSceneHostingBlocker())) }
+            onClosed?()
+            onClosed = nil
+            return
+        }
+        phase = .opening
+        openCompletions.append(completion)
         loadViewIfNeeded()
         let screen = UIScreen.main.bounds
         let width = min(320, screen.width * 0.85)
         let height = min(520, screen.height * 0.8)
-        let frame = CGRect(x: screen.midX - width / 2, y: screen.midY - height / 2,
+        var frame = CGRect(x: screen.midX - width / 2, y: screen.midY - height / 2,
                            width: width, height: height)
+        guard SRMainConstrainWindow(frame, screen, &frame) else {
+            finishOpen(SRFloatingError.unavailable("Invalid display geometry.")); close(); return
+        }
         let window = UIWindow(frame: frame)
         window.windowLevel = UIWindow.Level(rawValue: UIWindow.Level.normal.rawValue + 2)
         window.rootViewController = self
         view.frame = window.bounds
         view.layoutIfNeeded()
-        var error: NSError?
-        guard SRMainAttachScene(sceneSession, bundleIdentifier, appContainer, &error) else {
-            _ = SRMainCloseScene(sceneSession, nil)
-            window.rootViewController = nil
-            if let error = error { throw error }
-            throw SRFloatingError.unavailable("Scene attach failed without an error.")
-        }
+        // Hidden UIWindow supplies a real UIKit window hierarchy during asynchronous preparation.
+        // Do not makeKeyAndVisible: focus/input routing is NOT implicitly claimed by drawing layers.
+        window.isHidden = true
         floatingWindow = window
-        window.isHidden = false
+        SRMainSetInvalidationHandler(sceneSession) { [weak self] error in
+            guard let self = self else { return }
+            self.finishOpen(error ?? SRFloatingError.unavailable("Scene invalidated."))
+            self.close()
+        }
+        SRMainAttachSceneAsync(sceneSession, bundleIdentifier, appContainer) { [weak self, weak window] error in
+            guard let self = self else { return }
+            guard self.phase == .opening else { return } // closed/cancelled generation never reveals a window
+            if let error = error { self.finishOpen(error); self.close(); return }
+            guard let window = window, window === self.floatingWindow else {
+                self.finishOpen(SRFloatingError.unavailable("Window identity changed.")); self.close(); return
+            }
+            self.phase = .attached
+            window.isHidden = false // only after actual host views are attached
+            self.finishOpen(nil)
+        }
     }
 
-    func bringForward() { floatingWindow?.isHidden = false }
+    private func finishOpen(_ error: Error?) {
+        let callbacks = openCompletions
+        openCompletions.removeAll()
+        for callback in callbacks {
+            DispatchQueue.main.async { [weak self] in
+                if error == nil && self?.phase != .attached {
+                    callback(SRFloatingError.unavailable("Opening was cancelled before callback delivery."))
+                } else { callback(error) }
+            }
+        }
+    }
 
     func close() {
         precondition(Thread.isMainThread)
-        guard !closed else { return }
-        // Remote cleanup first. On failure retain ownership and keep a usable close control.
-        var error: NSError?
-        guard SRMainCloseScene(sceneSession, &error) else {
-            NSLog("[SthenoRebuild] Scene close failed: %@", error?.localizedDescription ?? "unknown")
-            return
-        }
-        closed = true
+        guard phase != .closing && phase != .closed else { return }
+        phase = .closing
+        displayGeneration &+= 1
+        queuedFrame = nil
         floatingWindow?.isHidden = true
-        floatingWindow?.rootViewController = nil
-        floatingWindow = nil
-        onClosed?()
-        onClosed = nil
+        finishOpen(SRFloatingError.unavailable("Window was closed before its opening completed."))
+        SRMainCloseSceneAsync(sceneSession) { [weak self] error in
+            guard let self = self, self.phase == .closing else { return }
+            if let error = error {
+                // Local views are detached, but do NOT report an uncertain foreground rollback as success.
+                NSLog("[SthenoRebuild] Scene close incomplete: %@", error.localizedDescription)
+            }
+            self.phase = .closed
+            self.floatingWindow?.rootViewController = nil
+            self.floatingWindow = nil
+            self.onClosed?()
+            self.onClosed = nil
+        }
     }
     @objc private func closeTapped() { close() }
 
     @objc private func drag(_ gesture: UIPanGestureRecognizer) {
-        guard let window = floatingWindow else { return }
+        guard phase == .attached, let window = floatingWindow else { return }
         if gesture.state == .began { panOrigin = window.frame.origin }
         let delta = gesture.translation(in: header)
-        let screen = UIScreen.main.bounds
-        var frame = window.frame
-        frame.origin.x = min(max(screen.minX, panOrigin.x + delta.x), screen.maxX - frame.width)
-        frame.origin.y = min(max(screen.minY, panOrigin.y + delta.y), screen.maxY - frame.height)
-        window.frame = frame
+        var requested = window.frame
+        requested.origin = gesture.state == .cancelled ? panOrigin :
+            CGPoint(x: panOrigin.x + delta.x, y: panOrigin.y + delta.y)
+        var constrained = requested
+        if SRMainConstrainWindow(requested, UIScreen.main.bounds, &constrained) { window.frame = constrained }
     }
 
     @objc private func resize(_ gesture: UIPinchGestureRecognizer) {
-        guard let window = floatingWindow else { return }
+        guard phase == .attached, let window = floatingWindow else { return }
         if gesture.state == .began { pinchSize = window.bounds.size }
-        let screen = UIScreen.main.bounds
-        let scale = gesture.scale
+        let scale = gesture.state == .cancelled ? 1 : gesture.scale
         guard scale.isFinite, scale > 0 else { return }
-        let width = min(max(160, pinchSize.width * scale), screen.width * 0.95)
-        let height = min(max(200, pinchSize.height * scale), screen.height * 0.95)
-        let bounds = CGRect(x: 0, y: 0, width: width, height: height - 36)
-        var error: NSError?
-        guard SRMainResizeScene(sceneSession, bounds, &error) else { return }
-        var frame = window.frame
-        frame.size = CGSize(width: width, height: height)
-        frame.origin.x = min(max(screen.minX, frame.minX), screen.maxX - width)
-        frame.origin.y = min(max(screen.minY, frame.minY), screen.maxY - height)
-        window.frame = frame
+        var requested = window.frame
+        requested.size = CGSize(width: pinchSize.width * scale, height: pinchSize.height * scale)
+        var frame = requested
+        guard SRMainConstrainWindow(requested, UIScreen.main.bounds, &frame) else { return }
+        queuedFrame = frame
+        applyQueuedResize()
+    }
+
+    private func applyQueuedResize() {
+        guard phase == .attached, !resizeInFlight, let requested = queuedFrame,
+              let window = floatingWindow else { return }
+        queuedFrame = nil
+        resizeInFlight = true
+        let previous = window.frame
+        let generation = displayGeneration
+        window.frame = requested
         view.layoutIfNeeded()
+        SRMainResizeSceneAsync(sceneSession, appContainer.bounds) { [weak self, weak window] error in
+            guard let self = self, self.phase == .attached,
+                  self.displayGeneration == generation, let window = window,
+                  window === self.floatingWindow else { return }
+            self.resizeInFlight = false
+            if let error = error {
+                window.frame = previous
+                self.view.layoutIfNeeded()
+                NSLog("[SthenoRebuild] Display resize failed: %@", error.localizedDescription)
+                self.close()
+                return
+            }
+            self.applyQueuedResize() // coalesce rapid pinch changes, no out-of-order frame rollback
+        }
     }
 }

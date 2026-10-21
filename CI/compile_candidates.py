@@ -11,16 +11,20 @@ def run(args):
 def xcrun(*args):
     return subprocess.check_output(['xcrun','--sdk','iphoneos',*args],text=True).strip()
 sdk=xcrun('--show-sdk-path');clang=xcrun('--find','clang++');swift=xcrun('--find','swiftc')
-source_names=subprocess.check_output(['rg','--files','Sources/Main','-g','*.mm'],cwd=ROOT,text=True).splitlines()
+source_names=subprocess.check_output(['rg','--files','Sources/Main','-g','*.mm','-g','*.c'],cwd=ROOT,text=True).splitlines()
 record={'scope':'Main candidates OBJECTS ONLY; main unavailable, not linked or loaded',
         'architectures':['arm64','arm64e'],'sdk':sdk,'commands':[]}
 for arch in record['architectures']:
     directory=OBJECTS/arch;directory.mkdir(exist_ok=True)
     for name in sorted(source_names):
         obj=directory/(name.replace('/','__')+'.o')
-        args=[clang,'-target',arch+'-apple-ios15.0','-isysroot',sdk,'-std=c++17',
-              '-fobjc-arc','-fblocks','-ISources/Shared','-Werror=return-type',
-              '-c',name,'-o',obj]
+        args=[clang,'-target',arch+'-apple-ios15.0','-isysroot',sdk,
+              '-ISources/Shared','-Werror=return-type']
+        if name.endswith('.mm'):
+            args+=['-std=c++17','-fobjc-arc','-fblocks']
+        else:
+            args+=['-x','c','-std=c11']
+        args+=['-c',name,'-o',obj]
         run(args);record['commands'].append(list(map(str,args)))
     args=[swift,'-target',arch+'-apple-ios15.0','-sdk',sdk,'-swift-version','5',
           '-parse-as-library','-emit-object','-module-name','SthenoRebuildCandidate',

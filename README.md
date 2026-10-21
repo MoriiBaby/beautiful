@@ -7,7 +7,7 @@
 - `Sources/Camera`：Camera 开关保持语义、RootHide 真路径、逐签名选择的 Hook。
 - `Sources/Keyboard`：Apps 字符串筛选、前台 JSON 消费、responder 通知、scene/169/几何处理。
 - `Sources/Shared`：生产 C 策略、精确 ABI 核验、默认 opt-in 关闭和原包共存拦截。
-- `Sources/Main`：未完成主浮窗候选，包括真实图层宿主、窗口交互和场景桥接；**不启用、不发布主模块**。
+- `Sources/Main`：主浮窗候选现在包含异步 `SRSceneSession`：唯一场景选择、精确 ABI、真实图层接入、刷新、取消和关闭恢复状态机；**前台所有权 provider 尚未实现，公开入口默认不可用**。
 
 相机、键盘也尚无安装后的设备功能验证。宿主测试、对象编译、动态库链接不能替代可用性和稳定性验收。
 
@@ -47,4 +47,4 @@ python3 CI/compile_candidates.py
 
 新包预留身份 `com.local.stheno.reconstruction` / `0.1.0~dev1`；声明与原包冲突，不覆盖/冒充原版。开发行为默认关闭。
 
-细节见 `Docs/CLOUD-PLAN.md`、`Docs/SMALL-MODULES.md` 和 `Docs/SCENE-HOSTING.md`。
+细节见 `Docs/CLOUD-PLAN.md`、`Docs/SMALL-MODULES.md`、`Docs/SCENE-HOSTING.md` 和 `Docs/SCENE-SESSION.md`。
