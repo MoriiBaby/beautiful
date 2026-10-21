@@ -21,7 +21,7 @@ jobs:
       - name: Install GNU make and ldid
         run: |
           set -euo pipefail
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install make ldid xz
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install make ldid xz ripgrep
           echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
       - name: Check Apple toolchain
         run: |
